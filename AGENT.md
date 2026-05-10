@@ -35,11 +35,11 @@ Each iteration spawns a fresh `claude -p` session that re-reads `PROMPT.md`.
 
 | var | default | purpose |
 |---|---|---|
-| `ITER_TIMEOUT_S` | `1200` | Hard kill an iteration that runs >20 min |
+| `ITER_TIMEOUT_S` | `2400` | Hard kill an iteration that runs >40 min |
 | `COOLDOWN_S` | `60` | Idle gap between iterations (laptop thermal relief) |
 | `STAGNATION_LIMIT` | `8` | Stop if `results/best.json` doesn't improve for N iters |
 | `MAX_HOURS` | `12` | Wall-clock cap |
-| `MAX_ITERS` | `50` | Iteration cap (`0` = unlimited; auto-set by `--forever`) |
+| `MAX_ITERS` | `30` | Iteration cap (`0` = unlimited; auto-set by `--forever`) |
 | `FAIL_STREAK_LIMIT` | `3` | Stop after N consecutive iter failures |
 
 The script traps `SIGINT`/`SIGTERM` to kill any in-flight orchestrator child before exiting.

@@ -6,6 +6,16 @@ You are one iteration of a forever-loop optimizing Claude Haiku's hallucination 
 
 ---
 
+## Step 0 — Recover from any aborted prior iteration
+
+Run `git status --short`. If there are **uncommitted changes** (e.g. a previous iteration ran past the timeout and was killed mid-work):
+
+- Inspect them with `git diff --stat` and `git diff`.
+- If they look like coherent in-progress work (a new technique added, scoring updated, strategy changed): **finish that work and commit it as THIS iteration's contribution**. Update fix_plan.md to note the recovery, then proceed to Step 5 (commit + push) and exit.
+- If they look broken or contradictory: `git restore` them and proceed normally.
+
+This avoids losing partial work and avoids stacking multiple incomplete changes.
+
 ## Step 1 — Orient
 
 Read in this order:
