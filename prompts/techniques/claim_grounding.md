@@ -53,3 +53,25 @@ HaluEval iter, still well under $1.
   were the dominant failure (11/15).
 - If the model's verdict line is malformed, falls back to a yes/no direct call —
   costs slightly more, no degradation.
+
+## Iter 4 → tuning
+Iter 4 reproduced HaluEval at 0.20 (vs 0.09 in iter 3) — high variance.
+11 of 20 failures were FPs; 3-4 of those were the same over-decomposition
+pattern: short-name candidate (e.g. "MGM Resorts International",
+"Mika Juhani Kaurismäki", "Barton Mine") got internally rephrased into a
+hypothetical comparative or relational claim that the candidate never
+actually made, then flagged NOT_IN_KNOWLEDGE.
+
+Iter-4 GROUND_SYS update:
+- Added a CRITICAL INTERPRETATION RULE telling the checker to read the
+  candidate LITERALLY and never invent inferred relational claims.
+- For SHORT-NAME answers (1-5 words, no verb/predicate), the ELEMENTS list
+  must contain exactly ONE entry: "the answer to the question is <X>".
+- That single element is SUPPORTED whenever the knowledge mentions <X> in a
+  plausible answering context, and CONTRADICTED only if the knowledge clearly
+  indicates a different answer.
+- "When in doubt" tiebreak is now SPLIT: prefer CLEAN for short-name answers,
+  prefer HALLUCINATED for longer prose candidates (the original FN failure mode).
+
+Hypothesis: this should recover ~3-4 FPs without re-introducing FNs on the
+longer candidates. If iter 5 doesn't show ≥3pp improvement, demote to direct.

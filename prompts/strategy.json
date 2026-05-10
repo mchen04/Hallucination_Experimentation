@@ -6,5 +6,5 @@
   "subset_size": 100,
   "full_eval_every": 10,
   "concurrency": 4,
-  "iteration": 3
+  "iteration": 4
 }

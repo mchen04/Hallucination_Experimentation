@@ -14,10 +14,10 @@
     "n": 100
   },
   "factualityprompt": {
-    "hallucination_rate": 0.10999999999999999,
-    "accuracy": 0.89,
+    "hallucination_rate": 0.06999999999999995,
+    "accuracy": 0.93,
     "technique": "direct",
-    "iteration": 3,
+    "iteration": 4,
     "n": 100
   }
 }
