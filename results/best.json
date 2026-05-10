@@ -1,0 +1,23 @@
+{
+  "truthfulqa": {
+    "hallucination_rate": 0.050000000000000044,
+    "accuracy": 0.95,
+    "technique": "direct",
+    "iteration": 1,
+    "n": 100
+  },
+  "halueval": {
+    "hallucination_rate": 0.15000000000000002,
+    "accuracy": 0.85,
+    "technique": "direct",
+    "iteration": 1,
+    "n": 100
+  },
+  "factualityprompt": {
+    "hallucination_rate": 0.15000000000000002,
+    "accuracy": 0.85,
+    "technique": "direct",
+    "iteration": 1,
+    "n": 100
+  }
+}

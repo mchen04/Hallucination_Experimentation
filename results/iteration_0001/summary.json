@@ -1,0 +1,40 @@
+{
+  "iteration": 1,
+  "is_full_eval": false,
+  "by_benchmark": {
+    "truthfulqa": {
+      "benchmark": "truthfulqa",
+      "technique": "direct",
+      "n": 100,
+      "correct": 95,
+      "accuracy": 0.95,
+      "hallucination_rate": 0.050000000000000044,
+      "iteration": 1
+    },
+    "halueval": {
+      "benchmark": "halueval",
+      "technique": "direct",
+      "n": 100,
+      "correct": 85,
+      "accuracy": 0.85,
+      "hallucination_rate": 0.15000000000000002,
+      "iteration": 1
+    },
+    "factualityprompt": {
+      "benchmark": "factualityprompt",
+      "technique": "direct",
+      "n": 100,
+      "correct": 85,
+      "accuracy": 0.85,
+      "hallucination_rate": 0.15000000000000002,
+      "iteration": 1
+    }
+  },
+  "totals": {
+    "calls": 400,
+    "cost_usd": 4.0736,
+    "errors": 0,
+    "cache_hits": 190
+  },
+  "timestamp": "2026-05-10T21:27:53Z"
+}

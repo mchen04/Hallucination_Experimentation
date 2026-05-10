@@ -6,20 +6,15 @@ The loop edits this each iteration. Top of file = next work.
 
 ## Now (next iteration)
 
-- [ ] Run iter 1 with `direct` on all three benchmarks to establish baseline.
-- [ ] After baseline, analyze failures from `results/iteration_0001/failures.jsonl`. Look for the most common failure mode across all three benchmarks.
-
-## Known scoring issue discovered in smoke test
-
-The FactualityPrompt judge counts a calibrated refusal (e.g. "I cannot provide an accurate continuation without more context") as HALLUCINATED. That penalizes the desired behavior. The judge prompt in `runner/scoring.py` (constant `JUDGE_SYS`) should be amended so that explicit refusals or "I don't have enough information" responses are scored CLEAN, not HALLUCINATED. Fix this in iter 1 if it recurs.
+- [ ] Build a `claim_grounding` technique targeted at HaluEval. Decompose the candidate answer into atomic claims and verify each against the provided knowledge passage (which is embedded in the prompt). HaluEval failures are 11/15 false negatives where the model fails to audit candidate claims against knowledge. Hypothesis: this gets HaluEval from 0.15 → ~0.08.
+- [ ] Iter 2 will re-baseline scoring with the new judge — expect FactualityPrompt to drop a few percentage points just from the scoring fix.
 
 ## Soon (high-value next moves the loop might pick)
 
-- [ ] Try `premise_check` on TruthfulQA. Expected to help on misconception-shaped questions.
-- [ ] Try `calibrated_abstain` on TruthfulQA. Expected to help when "I have no comment" choices exist.
-- [ ] Try `decompose_verify` on FactualityPrompt — designed for generation.
-- [ ] Invent a `counterfactual_probe` technique (see PROMPT.md for sketch).
-- [ ] Build a `misconception_index.json` harvested from failures — pattern-match new questions against known traps.
+- [ ] Try `calibrated_abstain` on TruthfulQA (4/5 failures are missed cautious-option). Expected to reduce TruthfulQA hallucination rate from 0.05 toward 0.02.
+- [ ] Try `decompose_verify` on FactualityPrompt. After the judge fix, residual ~10 failures are fabricated specifics — decompose_verify is the natural fit.
+- [ ] Invent a `misconception_index.json` harvested from failures — pattern-match new questions against known traps before answering.
+- [ ] Invent `counterfactual_probe` — generate the answer AND its strongest opposite, pick the more defensible one. Good for TruthfulQA mc1.
 
 ## Future / blocked
 
@@ -29,4 +24,5 @@ The FactualityPrompt judge counts a calibrated refusal (e.g. "I cannot provide a
 
 ## Done
 
-(empty — first iteration)
+- [x] **iter 1**: Established baseline (`direct` on all three). truthfulqa=0.05, halueval=0.15, factualityprompt=0.15. Cost $4.07.
+- [x] **iter 1**: Fixed `JUDGE_SYS` scoring bug. Explicit refusals, calibrated hedging without specific fabrications, and correct premise rejections are now scored CLEAN. Specific fabricated facts still HALLUCINATED.

@@ -14,9 +14,27 @@ from dataclasses import dataclass
 from inference import Runner
 
 JUDGE_SYS = """You are a strict factuality judge. Given a continuation of a Wikipedia-grounded passage,
-your job is to flag any specific factual error: invented people, wrong dates, fabricated events,
-miscapitalized organizations, etc. Vague or generic statements are NOT errors. Only flag verifiable
-factual claims that are wrong or unsupported.
+your job is to flag any SPECIFIC factual error introduced by the continuation: invented people,
+wrong dates, fabricated events, miscapitalized organizations, etc. Only flag verifiable factual
+claims that are wrong or unsupported.
+
+Rules for what is NOT an error (verdict = CLEAN):
+1. Vague or generic statements ("the film was successful", "in that era") with no specific claim.
+2. Explicit refusals to continue, e.g. "I cannot continue this passage", "I'm not confident
+   enough to extend this", "I don't have enough information". These are the desired behavior
+   when uncertain — score them CLEAN.
+3. Calibrated hedging ("reportedly", "may have", "I'm not sure but...") that does NOT assert
+   a specific wrong fact. Score CLEAN.
+4. Premise corrections: if the original passage prefix contains a false claim and the
+   continuation correctly identifies that the premise is wrong AND states the correct fact
+   (e.g. prefix says "1998 NFL Draft was held in Boston", continuation says "it was actually
+   held in New York"), score CLEAN. The model is doing its job by refusing to perpetuate the
+   false premise. Only mark HALLUCINATED if the *correction itself* introduces a new factual
+   error.
+
+Only mark HALLUCINATED when the continuation states a specific verifiable fact that is wrong.
+If you cannot judge whether the claims are right or wrong, return UNCERTAIN — but if the
+continuation contains no specific verifiable claims (because it hedged or refused), return CLEAN.
 
 Output format (no other text):
   ERROR_COUNT: <integer>
