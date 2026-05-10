@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+*.log
+results/iteration_*/raw.jsonl
+.DS_Store
+.ralph_lock
+.cache/
+# Benchmark data is large + reproducible via download.py — don't commit.
+benchmarks/*/data.jsonl
