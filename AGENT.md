@@ -20,15 +20,31 @@ Environment knobs:
 - `HALLUC_MODEL=claude-haiku-4-5-20251001`  — override target model
 - `HALLUC_KEEP_RAW=1`        — also write `raw.jsonl` with every prediction (large)
 
-## Run the forever loop
+## Run the loop
 
 ```bash
-./ralph_loop.sh                 # forever
+./ralph_loop.sh                 # safe default: 50 iters cap, 12h wall-clock, stagnation auto-stop
 ./ralph_loop.sh --iters 5       # bounded
 ./ralph_loop.sh --once          # one iteration (for debugging the orchestrator)
+./ralph_loop.sh --forever       # opt-in unbounded (still has stagnation + thermal guards)
 ```
 
 Each iteration spawns a fresh `claude -p` session that re-reads `PROMPT.md`.
+
+### Safety knobs (env-overridable)
+
+| var | default | purpose |
+|---|---|---|
+| `ITER_TIMEOUT_S` | `1200` | Hard kill an iteration that runs >20 min |
+| `COOLDOWN_S` | `60` | Idle gap between iterations (laptop thermal relief) |
+| `STAGNATION_LIMIT` | `8` | Stop if `results/best.json` doesn't improve for N iters |
+| `MAX_HOURS` | `12` | Wall-clock cap |
+| `MAX_ITERS` | `50` | Iteration cap (`0` = unlimited; auto-set by `--forever`) |
+| `FAIL_STREAK_LIMIT` | `3` | Stop after N consecutive iter failures |
+
+The script traps `SIGINT`/`SIGTERM` to kill any in-flight orchestrator child before exiting.
+
+Requires `coreutils` for `timeout` (`brew install coreutils` if missing).
 
 ## Re-download benchmark data
 
