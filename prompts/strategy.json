@@ -1,10 +1,10 @@
 {
   "_comment": "Active technique per benchmark. The loop edits this file when promoting/demoting techniques. See prompts/techniques/*.md for what each does.",
   "truthfulqa": "direct",
-  "halueval": "direct",
+  "halueval": "claim_grounding",
   "factualityprompt": "direct",
   "subset_size": 100,
   "full_eval_every": 10,
   "concurrency": 4,
-  "iteration": 1
+  "iteration": 3
 }

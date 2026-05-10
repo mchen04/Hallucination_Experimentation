@@ -6,15 +6,14 @@ The loop edits this each iteration. Top of file = next work.
 
 ## Now (next iteration)
 
-- [ ] Build a `claim_grounding` technique targeted at HaluEval. Decompose the candidate answer into atomic claims and verify each against the provided knowledge passage (which is embedded in the prompt). HaluEval failures are 11/15 false negatives where the model fails to audit candidate claims against knowledge. Hypothesis: this gets HaluEval from 0.15 → ~0.08.
-- [ ] Iter 2 will re-baseline scoring with the new judge — expect FactualityPrompt to drop a few percentage points just from the scoring fix.
+- [ ] Invent **`grounded_correction`** for FactualityPrompt. 8/11 iter-3 factualityprompt failures are "model rejects a false premise, then fabricates new specifics in the correction" (wrong actor, wrong ancestry, wrong character name). Technique: after the initial generation, run a self-audit pass that flags every specific in the correction and forces the model to either keep specifics it would defend in 3 sources or replace them with a generic phrasing. Expected: 0.11 → ~0.05 on factualityprompt.
 
 ## Soon (high-value next moves the loop might pick)
 
-- [ ] Try `calibrated_abstain` on TruthfulQA (4/5 failures are missed cautious-option). Expected to reduce TruthfulQA hallucination rate from 0.05 toward 0.02.
-- [ ] Try `decompose_verify` on FactualityPrompt. After the judge fix, residual ~10 failures are fabricated specifics — decompose_verify is the natural fit.
+- [ ] Tune `claim_grounding` — the FN→FP swap (4 FNs left, 5 FPs) means the "prefer HALLUCINATED when in doubt" bias is now too aggressive. Try downgrading "any NOT_IN_KNOWLEDGE specific = hallucinated" to "any NOT_IN_KNOWLEDGE date/place/quantifier/named-entity = hallucinated". Should cut FPs while preserving the FN gains.
+- [ ] Try `counterfactual_probe` on TruthfulQA — generate the answer AND its strongest opposite, pick the more defensible. Good for TruthfulQA mc1's "popular wrong answer" failures (all 11 iter-3 failures are this pattern).
+- [ ] Try `calibrated_abstain` on TruthfulQA — second-place option after counterfactual_probe.
 - [ ] Invent a `misconception_index.json` harvested from failures — pattern-match new questions against known traps before answering.
-- [ ] Invent `counterfactual_probe` — generate the answer AND its strongest opposite, pick the more defensible one. Good for TruthfulQA mc1.
 
 ## Future / blocked
 
@@ -26,3 +25,4 @@ The loop edits this each iteration. Top of file = next work.
 
 - [x] **iter 1**: Established baseline (`direct` on all three). truthfulqa=0.05, halueval=0.15, factualityprompt=0.15. Cost $4.07.
 - [x] **iter 1**: Fixed `JUDGE_SYS` scoring bug. Explicit refusals, calibrated hedging without specific fabrications, and correct premise rejections are now scored CLEAN. Specific fabricated facts still HALLUCINATED.
+- [x] **iter 3**: Built `claim_grounding` for HaluEval. Per-element audit (FAITHFUL / ELEMENTS / GROUND / VERDICT) against the knowledge passage. HaluEval 0.15 → **0.09** (-6pp, new best). FNs 11→4; FPs 4→5. Cost $4.29. (Iteration 2 was aborted mid-work — see notes file iteration_3_notes.md for the dropped numbering.)

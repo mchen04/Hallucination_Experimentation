@@ -7,17 +7,17 @@
     "n": 100
   },
   "halueval": {
-    "hallucination_rate": 0.15000000000000002,
-    "accuracy": 0.85,
-    "technique": "direct",
-    "iteration": 1,
+    "hallucination_rate": 0.08999999999999997,
+    "accuracy": 0.91,
+    "technique": "claim_grounding",
+    "iteration": 3,
     "n": 100
   },
   "factualityprompt": {
-    "hallucination_rate": 0.15000000000000002,
-    "accuracy": 0.85,
+    "hallucination_rate": 0.10999999999999999,
+    "accuracy": 0.89,
     "technique": "direct",
-    "iteration": 1,
+    "iteration": 3,
     "n": 100
   }
 }

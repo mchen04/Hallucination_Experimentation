@@ -337,6 +337,117 @@ async def calibrated_abstain(item: dict, runner: Runner, ctx: Ctx) -> dict:
     return await direct(item, runner, new_ctx)
 
 
+# ---------------- TECHNIQUE 7: claim_grounding ----------------
+# Targets HaluEval (binary QA with explicit knowledge). The direct technique
+# scans the prompt holistically and frequently misses small unsupported
+# elements (added dates, fabricated relations, temporal/causal additions).
+# claim_grounding forces a per-element audit against the provided knowledge
+# passage, then derives the yes/no verdict deterministically. For non-HaluEval
+# items, falls through to direct.
+
+GROUND_SYS = """You are a meticulous fact-checker.
+
+Inputs:
+- KNOWLEDGE: a passage that is the ONLY admissible source of truth. Treat it as a closed world.
+- QUESTION: what was originally asked (context for interpreting the candidate).
+- CANDIDATE: an answer to evaluate.
+
+Procedure (work it through in order):
+
+Step 1 - FAITHFUL: write the answer that follows STRICTLY from the knowledge. If the knowledge does not address the question, write "UNKNOWN FROM KNOWLEDGE".
+
+Step 2 - ELEMENTS: list every distinct factual element the candidate asserts. Cover:
+  - Named entities (people, places, organizations, titles)
+  - Dates, years, numbers, durations
+  - Relationships ("is owned by", "was directed by", "starred in")
+  - Comparatives / temporal ordering ("started first", "before", "after")
+  - Causal or motivational claims ("because", "to promote", "inspired by")
+  - Property qualifiers ("first", "only", "totally", "modern", "annual")
+For one-word or short answers, the single element is "the answer to the question is <X>".
+
+Step 3 - GROUND: for each element, mark:
+  - SUPPORTED : the knowledge directly states or unambiguously implies it (paraphrase OK).
+  - CONTRADICTED : the knowledge implies it is false.
+  - NOT_IN_KNOWLEDGE : the knowledge is silent on this specific element.
+
+Step 4 - VERDICT:
+  - HALLUCINATED if ANY element is CONTRADICTED, OR if the candidate adds a specific
+    factual element (date / place / cause / quantifier / comparison / attribution) that
+    is NOT_IN_KNOWLEDGE.
+  - CLEAN only if every element is SUPPORTED (or is a tautological restatement of the question).
+  - When in doubt between CLEAN and HALLUCINATED, prefer HALLUCINATED: unsupported
+    specifics are the failure mode we are trying to catch.
+
+Output format (exactly these line prefixes, no other prose):
+FAITHFUL: <one short line>
+ELEMENTS:
+- e1: <element>  ->  SUPPORTED|CONTRADICTED|NOT_IN_KNOWLEDGE  -  <≤12 word reason>
+- e2: ...
+VERDICT: HALLUCINATED
+   or
+VERDICT: CLEAN
+"""
+
+
+def _grounding_verdict(text: str) -> str | None:
+    """Map a claim_grounding output to 'yes' (hallucinated) or 'no' (clean)."""
+    if not text:
+        return None
+    up = text.upper()
+    # Look for the last VERDICT: line — the model may write the word in earlier prose.
+    last = None
+    for m in re.finditer(r"VERDICT\s*:\s*(HALLUCINATED|CLEAN|UNCERTAIN)", up):
+        last = m.group(1)
+    if last == "HALLUCINATED":
+        return "yes"
+    if last == "CLEAN":
+        return "no"
+    # Fallback heuristic if VERDICT line was malformed.
+    if re.search(r"\b(CONTRADICTED|NOT_IN_KNOWLEDGE)\b", up):
+        return "yes"
+    if "SUPPORTED" in up:
+        return "no"
+    return None
+
+
+async def claim_grounding(item: dict, runner: Runner, ctx: Ctx) -> dict:
+    md = item.get("metadata", {}) or {}
+    knowledge = md.get("knowledge")
+    candidate = md.get("candidate_answer")
+    if item["format"] != "binary" or not knowledge or candidate is None:
+        # Not a knowledge-grounded binary item — fall through.
+        return await direct(item, runner, ctx)
+
+    question = md.get("question", "")
+    user = (
+        f"KNOWLEDGE:\n{knowledge}\n\n"
+        f"QUESTION:\n{question}\n\n"
+        f"CANDIDATE:\n{candidate}\n\n"
+        "Run the four-step procedure now."
+    )
+    audit = await runner.call(user, system=GROUND_SYS)
+    parsed = _grounding_verdict(audit.text)
+
+    if parsed is None:
+        # Last-ditch: ask a yes/no on the raw item.
+        fallback = await runner.call(item["prompt"], system=ctx.system_prompt)
+        parsed = _parse_binary(fallback.text)
+        return {
+            "parsed_answer": parsed,
+            "raw_response": fallback.text,
+            "trace": [
+                {"step": "grounding", "text": audit.text},
+                {"step": "fallback_direct", "text": fallback.text},
+            ],
+        }
+
+    return {
+        "parsed_answer": parsed,
+        "raw_response": audit.text,
+        "trace": [{"step": "grounding", "text": audit.text}],
+    }
+
+
 # ---------------- registry ----------------
 
 TECHNIQUES: dict[str, Callable[[dict, Runner, Ctx], Awaitable[dict]]] = {
@@ -346,4 +457,5 @@ TECHNIQUES: dict[str, Callable[[dict, Runner, Ctx], Awaitable[dict]]] = {
     "adversarial_critique": adversarial_critique,
     "decompose_verify": decompose_verify,
     "calibrated_abstain": calibrated_abstain,
+    "claim_grounding": claim_grounding,
 }
